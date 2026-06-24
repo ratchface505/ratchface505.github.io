@@ -6,8 +6,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Jacked Summer">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Jacked Summer 2026</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -243,37 +241,185 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-const KEY='arc_v7';
-const DELOAD_WEEKS=[4,8,12];
+const KEY='catalyst_v1';
 const DAY_LABELS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const DAY_SHORT=['Mo','Tu','We','Th','Fr','Sa','Su'];
 const NAV_IDS=['navHome','navCalendar','navLog','navLifts','navProgress','navTimer'];
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const TOTAL_SESSIONS=20;
 
-const SESSION_TEMPLATES=[
-  {letter:'A',focus:'Snatch focus',exercises:[{name:'Snatch',sets:5,reps:3,pct:75},{name:'Snatch pull',sets:4,reps:3,pct:90},{name:'Overhead squat',sets:3,reps:5,pct:70},{name:'Back squat',sets:4,reps:4,pct:80}]},
-  {letter:'B',focus:'Clean & Jerk focus',exercises:[{name:'Clean & Jerk',sets:5,reps:2,pct:78},{name:'Clean pull',sets:4,reps:3,pct:90},{name:'Front squat',sets:3,reps:4,pct:80},{name:'Romanian deadlift',sets:3,reps:5,pct:65}]},
-  {letter:'C',focus:'Technique & power',exercises:[{name:'Power snatch',sets:5,reps:3,pct:70},{name:'Power clean',sets:4,reps:3,pct:72},{name:'Snatch balance',sets:3,reps:3,pct:65},{name:'Back squat',sets:3,reps:5,pct:75}]},
-  {letter:'D',focus:'Strength',exercises:[{name:'Clean & Jerk',sets:4,reps:2,pct:82},{name:'Snatch',sets:4,reps:2,pct:80},{name:'Front squat',sets:4,reps:3,pct:85},{name:'Deadlift',sets:3,reps:4,pct:80}]}
+// CATALYST ATHLETICS 4-WEEK LEG STRENGTH BLOCK
+// rm: which 1RM key to use for % calc. null = bodyweight/unloaded.
+const PROGRAM=[
+  // WEEK 1
+  {week:1,letter:'A',focus:'Squat & snatch pull',exercises:[
+    {name:'Back Squat',rm:'Back Squat',sets:[{pct:65,reps:10},{pct:65,reps:10},{pct:65,reps:10}]},
+    {name:'Hang Snatch (Mid Thigh)',rm:'Snatch',sets:[{pct:65,reps:3},{pct:65,reps:3},{pct:65,reps:3},{pct:65,reps:3},{pct:65,reps:3}]},
+    {name:'Halting Snatch Deadlift',rm:'Snatch',sets:[{pct:80,reps:3},{pct:80,reps:3},{pct:80,reps:3}]},
+    {name:'Overhead Squat',rm:'OH Squat',sets:[{pct:60,reps:3},{pct:60,reps:3},{pct:60,reps:3},{pct:60,reps:3},{pct:60,reps:3}]},
+  ]},
+  {week:1,letter:'B',focus:'Jerk & press',exercises:[
+    {name:'Jerk BTN',rm:'Jerk',sets:[{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3}]},
+    {name:'Push Press',rm:'Push Press',sets:[{pct:75,reps:5},{pct:75,reps:5},{pct:75,reps:5},{pct:75,reps:5}]},
+    {name:'Jerk Dip Squat',rm:'Jerk',sets:[{pct:80,reps:5},{pct:80,reps:5},{pct:80,reps:5}]},
+  ]},
+  {week:1,letter:'C',focus:'Squat & clean pull',exercises:[
+    {name:'Back Squat',rm:'Back Squat',sets:[{pct:75,reps:5},{pct:75,reps:5},{pct:75,reps:5},{pct:75,reps:5},{pct:75,reps:5}]},
+    {name:'Hang Clean (Mid Thigh)',rm:'Clean',sets:[{pct:65,reps:3},{pct:65,reps:3},{pct:65,reps:3},{pct:65,reps:3},{pct:65,reps:3}]},
+    {name:'Halting Clean Deadlift',rm:'Clean',sets:[{pct:80,reps:3},{pct:80,reps:3},{pct:80,reps:3}]},
+    {name:'SLDL',rm:'Clean',sets:[{pct:60,reps:5},{pct:60,reps:5},{pct:60,reps:5}]},
+  ]},
+  {week:1,letter:'D',focus:'Power day',exercises:[
+    {name:'Power Snatch',rm:'Power Snatch',sets:[{pct:65,reps:3},{pct:65,reps:3},{pct:65,reps:3},{pct:65,reps:3}]},
+    {name:'Power Clean',rm:'Power Clean',sets:[{pct:65,reps:3},{pct:65,reps:3},{pct:65,reps:3},{pct:65,reps:3}]},
+    {name:'Power Jerk',rm:'Power Jerk',sets:[{pct:65,reps:3},{pct:65,reps:3},{pct:65,reps:3},{pct:65,reps:3}]},
+    {name:'Snatch High-Pull',rm:'Snatch',sets:[{pct:70,reps:5},{pct:70,reps:5},{pct:70,reps:5}]},
+  ]},
+  {week:1,letter:'E',focus:'Competition lifts',exercises:[
+    {name:'Back Squat',rm:'Back Squat',sets:[{pct:80,reps:3},{pct:80,reps:3},{pct:80,reps:3},{pct:80,reps:3},{pct:80,reps:3},{pct:80,reps:3},{pct:80,reps:3},{pct:80,reps:3}]},
+    {name:'Snatch',rm:'Snatch',sets:[{pct:70,reps:3},{pct:70,reps:3},{pct:75,reps:2},{pct:75,reps:2},{pct:75,reps:2}]},
+    {name:'Clean and Jerk',rm:'C&J',sets:[{pct:70,reps:3},{pct:70,reps:3},{pct:75,reps:2},{pct:75,reps:2},{pct:75,reps:2}]},
+    {name:'Snatch High-Pull',rm:'Snatch',sets:[{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3}]},
+  ]},
+  // WEEK 2
+  {week:2,letter:'A',focus:'Squat & snatch pull',exercises:[
+    {name:'Back Squat',rm:'Back Squat',sets:[{pct:70,reps:10},{pct:70,reps:10},{pct:70,reps:10}]},
+    {name:'Hang Snatch (Mid Thigh)',rm:'Snatch',sets:[{pct:65,reps:3},{pct:65,reps:3},{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3}]},
+    {name:'Halting Snatch Deadlift',rm:'Snatch',sets:[{pct:80,reps:3},{pct:85,reps:3},{pct:85,reps:3}]},
+    {name:'Overhead Squat',rm:'OH Squat',sets:[{pct:65,reps:3},{pct:65,reps:3},{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3}]},
+  ]},
+  {week:2,letter:'B',focus:'Jerk & press',exercises:[
+    {name:'Jerk BTN',rm:'Jerk',sets:[{pct:75,reps:3},{pct:75,reps:3},{pct:75,reps:3},{pct:75,reps:3},{pct:75,reps:3}]},
+    {name:'Push Press',rm:'Push Press',sets:[{pct:75,reps:5},{pct:75,reps:5},{pct:80,reps:5},{pct:80,reps:5}]},
+    {name:'Jerk Dip Squat',rm:'Jerk',sets:[{pct:85,reps:5},{pct:85,reps:5},{pct:85,reps:5}]},
+  ]},
+  {week:2,letter:'C',focus:'Squat & clean pull',exercises:[
+    {name:'Back Squat',rm:'Back Squat',sets:[{pct:80,reps:5},{pct:80,reps:5},{pct:80,reps:5},{pct:80,reps:5},{pct:80,reps:5}]},
+    {name:'Hang Clean (Mid Thigh)',rm:'Clean',sets:[{pct:65,reps:3},{pct:65,reps:3},{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3}]},
+    {name:'Halting Clean Deadlift',rm:'Clean',sets:[{pct:80,reps:3},{pct:85,reps:3},{pct:85,reps:3}]},
+    {name:'SLDL',rm:'Clean',sets:[{pct:65,reps:5},{pct:65,reps:5},{pct:65,reps:5}]},
+  ]},
+  {week:2,letter:'D',focus:'Power day',exercises:[
+    {name:'Power Snatch',rm:'Power Snatch',sets:[{pct:65,reps:3},{pct:65,reps:3},{pct:70,reps:3},{pct:70,reps:3}]},
+    {name:'Power Clean',rm:'Power Clean',sets:[{pct:65,reps:3},{pct:65,reps:3},{pct:70,reps:3},{pct:70,reps:3}]},
+    {name:'Power Jerk',rm:'Power Jerk',sets:[{pct:65,reps:3},{pct:65,reps:3},{pct:70,reps:3},{pct:70,reps:3}]},
+    {name:'Snatch High-Pull',rm:'Snatch',sets:[{pct:70,reps:3},{pct:70,reps:3},{pct:75,reps:3}]},
+  ]},
+  {week:2,letter:'E',focus:'Competition lifts',exercises:[
+    {name:'Back Squat',rm:'Back Squat',sets:[{pct:85,reps:3},{pct:85,reps:3},{pct:85,reps:3},{pct:85,reps:3},{pct:85,reps:3},{pct:85,reps:3},{pct:85,reps:3},{pct:85,reps:3}]},
+    {name:'Snatch',rm:'Snatch',sets:[{pct:75,reps:3},{pct:75,reps:3},{pct:80,reps:2},{pct:80,reps:2}]},
+    {name:'Clean and Jerk',rm:'C&J',sets:[{pct:75,reps:3},{pct:75,reps:3},{pct:80,reps:2},{pct:80,reps:2}]},
+    {name:'Snatch High-Pull',rm:'Snatch',sets:[{pct:70,reps:3},{pct:75,reps:3},{pct:75,reps:3}]},
+  ]},
+  // WEEK 3
+  {week:3,letter:'A',focus:'Squat & snatch pull',exercises:[
+    {name:'Back Squat',rm:'Back Squat',sets:[{pct:73,reps:10},{pct:73,reps:10},{pct:73,reps:10}]},
+    {name:'Hang Snatch (Mid Thigh)',rm:'Snatch',sets:[{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3}]},
+    {name:'Halting Snatch Deadlift',rm:'Snatch',sets:[{pct:85,reps:3},{pct:85,reps:3},{pct:85,reps:3}]},
+    {name:'Overhead Squat',rm:'OH Squat',sets:[{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3}]},
+  ]},
+  {week:3,letter:'B',focus:'Jerk & press',exercises:[
+    {name:'Jerk BTN',rm:'Jerk',sets:[{pct:75,reps:3},{pct:75,reps:3},{pct:80,reps:3},{pct:80,reps:3}]},
+    {name:'Push Press',rm:'Push Press',sets:[{pct:75,reps:5},{pct:80,reps:5},{pct:80,reps:5}]},
+    {name:'Jerk Dip Squat',rm:'Jerk',sets:[{pct:85,reps:5},{pct:85,reps:5},{pct:85,reps:5}]},
+  ]},
+  {week:3,letter:'C',focus:'Squat & clean pull',exercises:[
+    {name:'Back Squat',rm:'Back Squat',sets:[{pct:83,reps:5},{pct:83,reps:5},{pct:83,reps:5},{pct:83,reps:5},{pct:83,reps:5}]},
+    {name:'Hang Clean (Mid Thigh)',rm:'Clean',sets:[{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3},{pct:70,reps:3}]},
+    {name:'Halting Clean Deadlift',rm:'Clean',sets:[{pct:85,reps:3},{pct:85,reps:3},{pct:85,reps:3}]},
+    {name:'SLDL',rm:'Clean',sets:[{pct:65,reps:5},{pct:70,reps:5},{pct:70,reps:5},{pct:70,reps:5}]},
+  ]},
+  {week:3,letter:'D',focus:'Power day',exercises:[
+    {name:'Power Snatch',rm:'Power Snatch',sets:[{pct:65,reps:3},{pct:70,reps:3},{pct:70,reps:3},{pct:75,reps:3}]},
+    {name:'Power Clean',rm:'Power Clean',sets:[{pct:65,reps:3},{pct:70,reps:3},{pct:70,reps:3},{pct:75,reps:3}]},
+    {name:'Power Jerk',rm:'Power Jerk',sets:[{pct:65,reps:3},{pct:70,reps:3},{pct:70,reps:3},{pct:75,reps:3}]},
+    {name:'Snatch High-Pull',rm:'Snatch',sets:[{pct:75,reps:5},{pct:75,reps:5},{pct:75,reps:5}]},
+  ]},
+  {week:3,letter:'E',focus:'Competition lifts',exercises:[
+    {name:'Back Squat',rm:'Back Squat',sets:[{pct:88,reps:3},{pct:88,reps:3},{pct:88,reps:3},{pct:88,reps:3},{pct:88,reps:3},{pct:88,reps:3},{pct:88,reps:3},{pct:88,reps:3}]},
+    {name:'Snatch',rm:'Snatch',sets:[{pct:75,reps:3},{pct:80,reps:3},{pct:85,reps:2},{pct:80,reps:2},{pct:80,reps:2}]},
+    {name:'Clean and Jerk',rm:'C&J',sets:[{pct:75,reps:3},{pct:80,reps:3},{pct:85,reps:2},{pct:80,reps:2},{pct:80,reps:2}]},
+    {name:'Snatch High-Pull',rm:'Snatch',sets:[{pct:75,reps:3},{pct:75,reps:3},{pct:75,reps:3}]},
+  ]},
+  // WEEK 4 DELOAD/TEST
+  {week:4,letter:'A',focus:'Deload — openers',exercises:[
+    {name:'Snatch',rm:'Snatch',sets:[{pct:60,reps:2},{pct:60,reps:2},{pct:60,reps:2},{pct:60,reps:2},{pct:60,reps:2}]},
+    {name:'Clean and Jerk',rm:'C&J',sets:[{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1}]},
+    {name:'Back Squat',rm:'Back Squat',sets:[{pct:50,reps:2},{pct:50,reps:2},{pct:50,reps:2}]},
+  ]},
+  {week:4,letter:'B',focus:'Deload — power & jumps',exercises:[
+    {name:'Power Snatch',rm:'Power Snatch',sets:[{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1},{pct:70,reps:1},{pct:70,reps:1},{pct:70,reps:1}]},
+    {name:'Power Clean & Power Jerk',rm:'Power Clean',sets:[{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1},{pct:70,reps:1},{pct:70,reps:1},{pct:70,reps:1}]},
+    {name:'Squat Jump',rm:null,sets:[{pct:null,reps:3},{pct:null,reps:3},{pct:null,reps:3}]},
+  ]},
+  {week:4,letter:'C',focus:'Deload — singles',exercises:[
+    {name:'Snatch',rm:'Snatch',sets:[{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1}]},
+    {name:'Clean and Jerk',rm:'C&J',sets:[{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1}]},
+    {name:'Back Squat',rm:'Back Squat',sets:[{pct:40,reps:2},{pct:40,reps:2},{pct:40,reps:2}]},
+    {name:'Squat Jump',rm:null,sets:[{pct:null,reps:3},{pct:null,reps:3},{pct:null,reps:3}]},
+  ]},
+  {week:4,letter:'D',focus:'Deload — power singles',exercises:[
+    {name:'Hang Power Snatch',rm:'Power Snatch',sets:[{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1}]},
+    {name:'Hang Power Clean & Power Jerk',rm:'Power Clean',sets:[{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1},{pct:60,reps:1}]},
+    {name:'Box Jump',rm:null,sets:[{pct:null,reps:3},{pct:null,reps:3},{pct:null,reps:3}]},
+  ]},
+  {week:4,letter:'E',focus:'MAX TEST DAY',exercises:[
+    {name:'Back Squat',rm:'Back Squat',sets:[{pct:null,reps:1,note:'Test max'}]},
+    {name:'Snatch',rm:'Snatch',sets:[{pct:80,reps:1},{pct:null,reps:1,note:'Heavy single'}]},
+    {name:'Clean and Jerk',rm:'C&J',sets:[{pct:80,reps:1},{pct:null,reps:1,note:'Heavy single'}]},
+  ]},
 ];
 
-function sn(week,letter){return `${week}${letter}`;}
+function sessLabel(s){return `${s.week}${s.letter}`;}
+function isDeload(s){return s.week===4;}
 
-function defaultData(){
-  const start=new Date();start.setHours(0,0,0,0);
-  const sched=[];
-  for(let w=1;w<=12;w++){
-    const anchor=new Date(start);anchor.setDate(start.getDate()+(w-1)*7);
-    const dow=anchor.getDay();const toMon=dow===0?-6:1-dow;
-    const mon=new Date(anchor);mon.setDate(anchor.getDate()+toMon);
-    [0,1,3,4].forEach((o,i)=>{
-      const d=new Date(mon);d.setDate(mon.getDate()+o);
-      sched.push({id:`w${w}s${i}`,week:w,sessionIdx:i,date:d.toISOString().split('T')[0]});
+// Schedule: 20 sessions, 4/calendar-week, starting Tue 24 Jun 2026
+// Cal week 1: Tue 24, Thu 26, Fri 27 Jun (3 sessions)
+// Cal weeks 2+: Mon/Tue/Thu/Fri (4 sessions each)
+function buildSchedule(){
+  const dates=['2026-06-24','2026-06-26','2026-06-27'];
+  const monStarts=['2026-06-29','2026-07-06','2026-07-13','2026-07-20','2026-07-27'];
+  for(const mon of monStarts){
+    const d=new Date(mon);
+    [0,1,3,4].forEach(offset=>{
+      const dd=new Date(d);dd.setDate(d.getDate()+offset);
+      dates.push(dd.toISOString().split('T')[0]);
     });
   }
-  return{startDate:start.toISOString(),schedule:sched,sessions:{},
-    prs:{'Snatch':{kg:45,date:'Test week'},'Clean & Jerk':{kg:60,date:'Test week'},'Back Squat':{kg:95,date:'Test week'},'Front Squat':{kg:null,date:null},'Overhead squat':{kg:null,date:null},'Deadlift':{kg:null,date:null}},
-    bodyweight:[],editingRM:null,darkMode:true,schedView:'cal',calViewMonth:null};
+  return dates.slice(0,20).map((date,i)=>({id:`s${i}`,sessionIdx:i,date}));
+}
+
+function calWeekOf(idx){return idx<3?1:Math.floor((idx-3)/4)+2;}
+
+function currentCalWeek(){
+  const today=todayStr();
+  const past=D.schedule.filter(s=>s.date<=today);
+  if(!past.length)return 1;
+  return calWeekOf(past[past.length-1].sessionIdx);
+}
+
+function todayStr(){return new Date().toISOString().split('T')[0];}
+function fmt(n){return n!==null&&n!==undefined&&n!==''?parseFloat(n).toFixed(1).replace(/\.0$/,''):'—';}
+function round5(n){return Math.round(n/2.5)*2.5;}
+function pctCalc(rmKey,pct){
+  if(!rmKey||pct===null||pct===undefined)return null;
+  const k=Object.keys(D.prs).find(k=>k.toLowerCase()===rmKey.toLowerCase());
+  const pr=k?D.prs[k]:null;
+  if(!pr||!pr.kg)return null;
+  return round5(pr.kg*(pct/100));
+}
+
+function defaultData(){
+  return{
+    schedule:buildSchedule(),sessions:{},
+    prs:{
+      'Back Squat':{kg:null,date:null},'Front Squat':{kg:null,date:null},'OH Squat':{kg:null,date:null},
+      'Snatch':{kg:null,date:null},'C&J':{kg:null,date:null},'Clean':{kg:null,date:null},
+      'Jerk':{kg:null,date:null},'Power Snatch':{kg:null,date:null},'Power Clean':{kg:null,date:null},
+      'Power Jerk':{kg:null,date:null},'Push Press':{kg:null,date:null},
+    },
+    bodyweight:[],editingRM:null,darkMode:true,schedView:'cal',calViewMonth:{y:2026,m:5},
+  };
 }
 
 function load(){try{const r=localStorage.getItem(KEY);return r?JSON.parse(r):null;}catch(e){return null;}}
@@ -281,23 +427,11 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
 
 let D=load()||defaultData();
 if(!D.schedView)D.schedView='cal';
-if(!D.calViewMonth){const n=new Date();D.calViewMonth={y:n.getFullYear(),m:n.getMonth()};}
+if(!D.calViewMonth)D.calViewMonth={y:2026,m:5};
 
 let tab='home',logState=null;
 let timerInterval=null,timerSeconds=120,timerRunning=false,timerAutoStart=true,timerPreset=120,timerTotal=120;
-let progressLift='Snatch',progressChart=null,weighChart=null,dragSrcId=null;
-
-function currentWeek(){const s=new Date(D.startDate),n=new Date();return Math.min(Math.max(Math.floor((n-s)/(1000*60*60*24*7))+1,1),12);}
-function isDeload(w){return DELOAD_WEEKS.includes(w);}
-function todayStr(){return new Date().toISOString().split('T')[0];}
-function fmt(n){return n!==null&&n!==undefined&&n!==''?parseFloat(n).toFixed(1).replace(/\.0$/,''):'—';}
-function round5(n){return Math.round(n/2.5)*2.5;}
-function pctCalc(liftName,pct){
-  const k=Object.keys(D.prs).find(k=>k.toLowerCase()===liftName.toLowerCase());
-  const pr=k?D.prs[k]:null;
-  if(!pr||!pr.kg)return null;
-  return round5(pr.kg*(pct/100));
-}
+let progressLift='Snatch',progressChart=null,weighChart=null;
 
 function toggleMode(){
   D.darkMode=!D.darkMode;save();
@@ -318,26 +452,25 @@ function go(t){
 function showToast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2200);}
 
 function updateHeader(){
-  const w=currentWeek();
+  const calWk=currentCalWeek();
   const chip=document.getElementById('weekChip');
-  chip.textContent=isDeload(w)?`W${w}✦`:`W${w}`;
-  chip.className=isDeload(w)?'deload-chip':'week-chip';
+  const calWkSessions=D.schedule.filter(s=>calWeekOf(s.sessionIdx)===calWk);
+  const hasDeload=calWkSessions.some(s=>PROGRAM[s.sessionIdx]&&isDeload(PROGRAM[s.sessionIdx]));
+  chip.textContent=hasDeload?`CW${calWk}✦`:`CW${calWk}`;
+  chip.className=hasDeload?'deload-chip':'week-chip';
   document.getElementById('app').className=D.darkMode?'app':'app lm';
   document.getElementById('modeBtn').textContent=D.darkMode?'☀':'🌙';
   const done=Object.keys(D.sessions).length;
-  document.getElementById('progBarFill').style.width=Math.round(done/48*100)+'%';
-  document.getElementById('progBarLabel').textContent=`${done}/48`;
+  document.getElementById('progBarFill').style.width=Math.round(done/TOTAL_SESSIONS*100)+'%';
+  document.getElementById('progBarLabel').textContent=`${done}/${TOTAL_SESSIONS}`;
   const today=todayStr();
-  const wSessions=D.schedule.filter(s=>s.week===w).sort((a,b)=>a.date.localeCompare(b.date));
-  const nextUndoneId=wSessions.find(s=>!D.sessions[s.id]&&s.date>=today)?.id||wSessions.find(s=>!D.sessions[s.id])?.id;
-  const dotsHtml=wSessions.map(s=>{
-    const t=SESSION_TEMPLATES[s.sessionIdx];
-    const logged=!!D.sessions[s.id];
-    const isNext=s.id===nextUndoneId;
-    let cls='sdot';
-    if(logged)cls+=' done';
-    else if(isNext)cls+=' next';
-    return `<div class="${cls}">${t.letter}</div>`;
+  const wkSched=D.schedule.filter(s=>calWeekOf(s.sessionIdx)===calWk).sort((a,b)=>a.date.localeCompare(b.date));
+  const nextUndoneId=wkSched.find(s=>!D.sessions[s.id]&&s.date>=today)?.id||wkSched.find(s=>!D.sessions[s.id])?.id;
+  const dotsHtml=wkSched.map(s=>{
+    const prog=PROGRAM[s.sessionIdx];if(!prog)return'';
+    const logged=!!D.sessions[s.id];const isNext=s.id===nextUndoneId;
+    let cls='sdot';if(logged)cls+=' done';else if(isNext)cls+=' next';
+    return `<div class="${cls}">${prog.letter}</div>`;
   }).join('');
   document.getElementById('sessDots').innerHTML=dotsHtml;
 }
@@ -353,39 +486,46 @@ function render(){
   else if(tab==='timer')renderTimer(c);
 }
 
-function getTodaySession(){return D.schedule.find(s=>s.date===todayStr());}
+function getTodaySession(){return D.schedule.find(s=>s.date===todayStr())||null;}
 function getNextSession(){return D.schedule.filter(s=>s.date>todayStr()).sort((a,b)=>a.date.localeCompare(b.date))[0]||null;}
 function daysUntil(ds){const n=new Date();n.setHours(0,0,0,0);return Math.round((new Date(ds)-n)/(1000*60*60*24));}
 
 function renderHome(c){
-  const w=currentWeek();const todaySess=getTodaySession();
+  const todaySess=getTodaySession();
   if(todaySess){
-    const t=SESSION_TEMPLATES[todaySess.sessionIdx];const logged=D.sessions[todaySess.id];const deload=isDeload(todaySess.week);
-    const exRows=t.exercises.map((ex,i)=>{
-      const target=pctCalc(ex.name,ex.pct);
-      return `<div class="exercise-row"><div class="ex-num">${i+1}</div><div class="ex-name">${ex.name}</div><div class="ex-rx">${ex.sets}×${ex.reps}${target?` · <span style="color:var(--gold)">${fmt(target)}kg</span>`:`· ${ex.pct}%`}</div></div>`;
-    }).join('');
-    c.innerHTML=`<div class="today-session"><div class="today-label">TODAY${deload?' · DELOAD':''}</div><div class="today-name">${sn(todaySess.week,t.letter)}</div><div class="today-focus">${t.focus}</div><div>${exRows}</div><button class="btn-gold ${logged?'done':''}" onclick="openLog('${todaySess.id}')">${logged?'✓ LOGGED — EDIT SESSION':'START SESSION'}</button></div><p class="sec-label">THIS WEEK</p><div class="card">${weekMiniList(w)}</div>`;
+    const prog=PROGRAM[todaySess.sessionIdx];
+    const logged=D.sessions[todaySess.id];
+    const deload=prog&&isDeload(prog);
+    const exRows=prog?prog.exercises.map((ex,i)=>{
+      const firstSet=ex.sets[0];
+      const target=pctCalc(ex.rm,firstSet.pct);
+      const totalSets=ex.sets.length;
+      const setScheme=totalSets+'x'+firstSet.reps+(ex.sets[ex.sets.length-1].pct!==firstSet.pct?' (prog)':'');
+      return `<div class="exercise-row"><div class="ex-num">${i+1}</div><div class="ex-name">${ex.name}</div><div class="ex-rx">${setScheme}${target?' · <span style="color:var(--gold)">'+fmt(target)+'kg</span>':firstSet.pct?' · '+firstSet.pct+'%':''}</div></div>`;
+    }).join(''):'';
+    c.innerHTML=`<div class="today-session"><div class="today-label">TODAY${deload?' · DELOAD':''}</div><div class="today-name">${prog?sessLabel(prog):''}</div><div class="today-focus">${prog?prog.focus:''}</div><div>${exRows}</div><button class="btn-gold ${logged?'done':''}" onclick="openLog('${todaySess.id}')">${logged?'✓ LOGGED — EDIT SESSION':'START SESSION'}</button></div><p class="sec-label">THIS CAL WEEK</p><div class="card">${calWeekMiniList(currentCalWeek())}</div>`;
   } else {
     const next=getNextSession();
     let nextHtml='';
     if(next){
-      const t=SESSION_TEMPLATES[next.sessionIdx];const days=daysUntil(next.date);
+      const prog=PROGRAM[next.sessionIdx];
+      const days=daysUntil(next.date);
       const d=new Date(next.date);const dayName=DAY_LABELS[d.getDay()===0?6:d.getDay()-1];
       const dateLabel=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-      const exPrev=t.exercises.map(ex=>`<div style="font-size:12px;color:var(--text3);padding:5px 0;border-bottom:0.5px solid var(--border)">${ex.name}<span style="float:right">${ex.sets}×${ex.reps}</span></div>`).join('');
-      nextHtml=`<div class="next-card"><div class="next-label">NEXT SESSION</div><div class="next-name">${sn(next.week,t.letter)}</div><div class="next-focus">${t.focus}</div><div class="next-when">${days===0?'Today':days===1?'Tomorrow':`In ${days} days`} · ${dayName} ${dateLabel}</div><div class="next-exercises">${exPrev}</div></div>`;
+      const exPrev=prog?prog.exercises.map(ex=>`<div style="font-size:12px;color:var(--text3);padding:5px 0;border-bottom:0.5px solid var(--border)">${ex.name}<span style="float:right">${ex.sets.length}x${ex.sets[0].reps}</span></div>`).join(''):'';
+      nextHtml=`<div class="next-card"><div class="next-label">NEXT SESSION</div><div class="next-name">${prog?sessLabel(prog):''}</div><div class="next-focus">${prog?prog.focus:''}</div><div class="next-when">${days===0?'Today':days===1?'Tomorrow':'In '+days+' days'} · ${dayName} ${dateLabel}</div><div class="next-exercises">${exPrev}</div></div>`;
     }
-    c.innerHTML=`<div class="rest-day"><div class="rest-title">Rest day</div><div class="rest-sub">Recovery is part of the program.</div>${nextHtml}</div><p class="sec-label" style="margin-top:8px">THIS WEEK</p><div class="card">${weekMiniList(w)}</div>`;
+    c.innerHTML=`<div class="rest-day"><div class="rest-title">Rest day</div><div class="rest-sub">Recovery is part of the program.</div>${nextHtml}</div><p class="sec-label" style="margin-top:8px">THIS CAL WEEK</p><div class="card">${calWeekMiniList(currentCalWeek())}</div>`;
   }
 }
 
-function weekMiniList(w){
-  return D.schedule.filter(s=>s.week===w).sort((a,b)=>a.date.localeCompare(b.date)).map(s=>{
-    const t=SESSION_TEMPLATES[s.sessionIdx];const logged=D.sessions[s.id];
+function calWeekMiniList(calWk){
+  return D.schedule.filter(s=>calWeekOf(s.sessionIdx)===calWk).sort((a,b)=>a.date.localeCompare(b.date)).map(s=>{
+    const prog=PROGRAM[s.sessionIdx];if(!prog)return'';
+    const logged=D.sessions[s.id];
     const d=new Date(s.date);const dayName=DAY_LABELS[d.getDay()===0?6:d.getDay()-1];
     const isToday=s.date===todayStr();
-    return `<div class="sess-row"><div class="sess-day" style="${isToday?'color:var(--gold)':''}">${dayName}</div><div class="sess-info"><div class="sess-name" style="font-size:13px">${sn(w,t.letter)}</div><div class="sess-focus">${t.focus}</div></div><button class="sess-act ${logged?'done':''}" onclick="openLog('${s.id}')">${logged?'✓':'Log'}</button></div>`;
+    return `<div class="sess-row"><div class="sess-day" style="${isToday?'color:var(--gold)':''}">${dayName}</div><div class="sess-info"><div class="sess-name" style="font-size:13px">${sessLabel(prog)}</div><div class="sess-focus">${prog.focus}</div></div><button class="sess-act ${logged?'done':''}" onclick="openLog('${s.id}')">${logged?'✓':'Log'}</button></div>`;
   }).join('');
 }
 
@@ -402,27 +542,29 @@ function renderCalendar(c){
     const hdrCells=DAY_SHORT.map(d=>`<div class="cal-hdr-cell">${d}</div>`).join('');
     const bodyCells=cells.map(d=>{
       const ds=d.toISOString().split('T')[0];const inMonth=d.getMonth()===m;
-      const sched=D.schedule.find(s=>s.date===ds);const logged=sched?!!D.sessions[sched.id]:false;
-      const t=sched?SESSION_TEMPLATES[sched.sessionIdx]:null;
+      const se=D.schedule.find(s=>s.date===ds);
+      const logged=se?!!D.sessions[se.id]:false;
+      const prog=se?PROGRAM[se.sessionIdx]:null;
       let cls='cal-day';if(!inMonth)cls+=' other-month';if(ds===today)cls+=' today';
-      if(sched&&logged)cls+=' logged';else if(sched)cls+=' has-sess';
-      const pill=sched?`<div class="cal-sess-pill">${sn(sched.week,t.letter)}</div>`:'';
-      return `<div class="${cls}" onclick="${sched?`openLog('${sched.id}')`:''}" title="${sched?sn(sched.week,t.letter):''}"><div class="cal-day-num">${d.getDate()}</div>${pill}</div>`;
+      if(se&&logged)cls+=' logged';else if(se)cls+=' has-sess';
+      const pill=prog?`<div class="cal-sess-pill">${sessLabel(prog)}</div>`:'';
+      return `<div class="${cls}" onclick="${se?`openLog('${se.id}')`:''}" title="${prog?sessLabel(prog):''}"><div class="cal-day-num">${d.getDate()}</div>${pill}</div>`;
     }).join('');
-    c.innerHTML=`${toggle}<div class="month-hdr"><button class="month-nav" onclick="changeMonth(-1)">‹</button><div class="month-title">${MONTHS[m]} ${y}</div><button class="month-nav" onclick="changeMonth(1)">›</button></div><div class="cal-hdr-row">${hdrCells}</div><div class="cal-body">${bodyCells}</div><div style="margin-top:12px;display:flex;gap:12px;font-size:10px;color:var(--text3)"><span><span style="color:var(--gold)">■</span> Scheduled</span><span><span style="color:var(--green)">■</span> Logged</span></div>`;
+    c.innerHTML=`${toggle}<div class="month-hdr"><button class="month-nav" onclick="changeMonth(-1)">&#8249;</button><div class="month-title">${MONTHS[m]} ${y}</div><button class="month-nav" onclick="changeMonth(1)">&#8250;</button></div><div class="cal-hdr-row">${hdrCells}</div><div class="cal-body">${bodyCells}</div><div style="margin-top:12px;display:flex;gap:12px;font-size:10px;color:var(--text3)"><span><span style="color:var(--gold)">&#9632;</span> Scheduled</span><span><span style="color:var(--green)">&#9632;</span> Logged</span></div>`;
   } else {
     const today=todayStr();let html='';
-    for(let wk=1;wk<=12;wk++){
-      const sessions=D.schedule.filter(s=>s.week===wk).sort((a,b)=>a.date.localeCompare(b.date));
-      const dlabel=isDeload(wk)?` <span style="font-size:9px;color:var(--gold)">DELOAD</span>`:'';
+    const maxCW=calWeekOf(19);
+    for(let cw=1;cw<=maxCW;cw++){
+      const sessions=D.schedule.filter(s=>calWeekOf(s.sessionIdx)===cw).sort((a,b)=>a.date.localeCompare(b.date));
       const rows=sessions.map(s=>{
-        const t=SESSION_TEMPLATES[s.sessionIdx];const logged=D.sessions[s.id];
+        const prog=PROGRAM[s.sessionIdx];if(!prog)return'';
+        const logged=D.sessions[s.id];
         const d=new Date(s.date);const dayName=DAY_LABELS[d.getDay()===0?6:d.getDay()-1];
         const dateLabel=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
         const isPast=s.date<today;
-        return `<div class="sess-row"><div class="sess-day" style="width:40px;line-height:1.4;${s.date===today?'color:var(--gold)':''}">${dayName}<br><span style="font-size:9px;color:var(--text3)">${dateLabel}</span></div><div class="sess-info"><div class="sess-name" style="font-size:12px">${sn(wk,t.letter)}</div><div class="sess-focus">${t.focus}</div></div><button class="sess-act ${logged?'done':''}" onclick="openLog('${s.id}')">${logged?'✓':isPast?'Late':'Log'}</button></div>`;
+        return `<div class="sess-row"><div class="sess-day" style="width:40px;line-height:1.4;${s.date===today?'color:var(--gold)':''}">${dayName}<br><span style="font-size:9px;color:var(--text3)">${dateLabel}</span></div><div class="sess-info"><div class="sess-name" style="font-size:12px">${sessLabel(prog)}</div><div class="sess-focus">${prog.focus}</div></div><button class="sess-act ${logged?'done':''}" onclick="openLog('${s.id}')">${logged?'&#10003;':isPast?'Late':'Log'}</button></div>`;
       }).join('');
-      html+=`<div style="margin-bottom:10px"><p class="sec-label">WEEK ${wk}${dlabel}</p><div class="card" style="padding:4px 14px">${rows}</div></div>`;
+      html+=`<div style="margin-bottom:10px"><p class="sec-label">CAL WEEK ${cw}</p><div class="card" style="padding:4px 14px">${rows}</div></div>`;
     }
     c.innerHTML=`${toggle}${html}`;
   }
@@ -433,50 +575,62 @@ function changeMonth(dir){
   D.calViewMonth={y,m};save();renderCalendar(document.getElementById('content'));
 }
 
-function dragStart(e,id){if(!id)return;dragSrcId=id;}
-function dragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
-function dragLeave(e){e.currentTarget.classList.remove('drag-over');}
-function dragDrop(e,ds){
-  e.preventDefault();e.currentTarget.classList.remove('drag-over');
-  if(!dragSrcId)return;
-  const existing=D.schedule.find(s=>s.date===ds&&s.id!==dragSrcId);
-  const src=D.schedule.find(s=>s.id===dragSrcId);if(!src)return;
-  if(existing){const tmp=existing.date;existing.date=src.date;src.date=tmp;}else src.date=ds;
-  dragSrcId=null;save();render();showToast('Schedule updated');
-}
-
 function openLog(id){
-  const sched=D.schedule.find(s=>s.id===id);if(!sched)return;
-  const t=SESSION_TEMPLATES[sched.sessionIdx];const existing=D.sessions[id];
-  logState={id,sched,template:t,sets:t.exercises.map((ex,ei)=>({exercise:ex,rows:existing?JSON.parse(JSON.stringify(existing.sets[ei]?.rows||[]))||buildRows(ex):buildRows(ex)})),notes:existing?.notes||'',media:existing?.media||[]};
+  const se=D.schedule.find(s=>s.id===id);if(!se)return;
+  const prog=PROGRAM[se.sessionIdx];if(!prog)return;
+  const existing=D.sessions[id];
+  const sets=prog.exercises.map((ex,ei)=>{
+    const existingRows=existing?.sets?.[ei]?.rows;
+    const rows=existingRows&&existingRows.length===ex.sets.length
+      ?JSON.parse(JSON.stringify(existingRows))
+      :ex.sets.map(s=>({reps:s.reps||'',kg:'',rpe:'',failed:false,pct:s.pct,note:s.note||''}));
+    return{exercise:ex,rows};
+  });
+  logState={id,sched:se,prog,sets,notes:existing?.notes||'',media:existing?.media||[]};
   tab='log';NAV_IDS.forEach(id=>document.getElementById(id).classList.remove('active'));document.getElementById('navLog').classList.add('active');render();
 }
-function buildRows(ex){return Array.from({length:ex.sets},()=>({reps:'',kg:'',rpe:'',failed:false}));}
 
 function renderLogPicker(c){
-  const w=currentWeek();
-  const html=D.schedule.filter(s=>s.week===w).sort((a,b)=>a.date.localeCompare(b.date)).map(s=>{
-    const t=SESSION_TEMPLATES[s.sessionIdx];const logged=D.sessions[s.id];
+  const calWk=currentCalWeek();
+  const sessions=D.schedule.filter(s=>calWeekOf(s.sessionIdx)===calWk).sort((a,b)=>a.date.localeCompare(b.date));
+  const html=sessions.map(s=>{
+    const prog=PROGRAM[s.sessionIdx];if(!prog)return'';
+    const logged=D.sessions[s.id];
     const d=new Date(s.date);const dayName=DAY_LABELS[d.getDay()===0?6:d.getDay()-1];
-    return `<div class="sess-row"><div class="sess-day">${dayName}</div><div class="sess-info"><div class="sess-name">${sn(w,t.letter)}</div><div class="sess-focus">${t.focus}${isDeload(w)?' · deload':''}</div></div><button class="sess-act ${logged?'done':''}" onclick="openLog('${s.id}')">${logged?'✓ Redo':'Log'}</button></div>`;
+    return `<div class="sess-row"><div class="sess-day">${dayName}</div><div class="sess-info"><div class="sess-name">${sessLabel(prog)}</div><div class="sess-focus">${prog.focus}</div></div><button class="sess-act ${logged?'done':''}" onclick="openLog('${s.id}')">${logged?'&#10003; Redo':'Log'}</button></div>`;
   }).join('');
-  c.innerHTML=`<p class="sec-label">WEEK ${w} SESSIONS</p><div class="card">${html}</div>`;
+  c.innerHTML=`<p class="sec-label">CAL WEEK ${calWk} SESSIONS</p><div class="card">${html}</div>`;
 }
 
 function renderLogForm(c){
-  const t=logState.template;const d=new Date(logState.sched.date);
-  const dayName=DAY_LABELS[d.getDay()===0?6:d.getDay()-1];const dateLabel=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-  const deload=isDeload(logState.sched.week);
+  const prog=logState.prog;
+  const d=new Date(logState.sched.date);
+  const dayName=DAY_LABELS[d.getDay()===0?6:d.getDay()-1];
+  const dateLabel=d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  const deload=isDeload(prog);
   let totalVol=0;logState.sets.forEach(s=>s.rows.forEach(r=>{totalVol+=(parseFloat(r.kg)||0)*(parseFloat(r.reps)||0);}));
   const liftsHtml=logState.sets.map((s,si)=>{
-    const ex=s.exercise;const target=pctCalc(ex.name,ex.pct);
-    const targetStr=target?`Target: ${fmt(target)}kg (${ex.pct}% 1RM)`:`${ex.pct}% of 1RM`;
-    const hasPrev=!!Object.values(D.sessions).find(sess=>sess.templateIdx===logState.sched.sessionIdx);
-    const rowsHtml=s.rows.map((r,ri)=>`<div class="set-row-g"><div class="set-num">${ri+1}</div><input class="set-inp target" type="number" inputmode="decimal" step="0.5" placeholder="${target?fmt(target):'kg'}" value="${r.kg}" oninput="setVal(${si},${ri},'kg',this.value)" /><input class="set-inp" type="number" inputmode="numeric" step="1" placeholder="${ex.reps}" value="${r.reps}" oninput="setVal(${si},${ri},'reps',this.value)" /><select class="rpe-sel" onchange="setVal(${si},${ri},'rpe',this.value)"><option value="">—</option>${[6,6.5,7,7.5,8,8.5,9,9.5,10].map(v=>`<option value="${v}" ${r.rpe==v?'selected':''}>${v}</option>`).join('')}</select><button class="fail-btn ${r.failed?'failed':''}" onclick="toggleFail(${si},${ri})">${r.failed?'MISS':'—'}</button><button class="rm-set-btn" onclick="removeSet(${si},${ri})">×</button></div>`).join('');
-    return `<div class="lift-block"><div class="lift-hdr"><div class="lift-title">${ex.name.toUpperCase()}</div><div class="lift-rx">${ex.sets}×${ex.reps}${deload?' · deload':''}</div></div><div class="lift-calc">${targetStr}</div><div class="set-hdr-row"><span></span><span>KG</span><span>REPS</span><span>RPE</span><span>MISS</span><span></span></div>${rowsHtml}<div class="set-actions"><button class="set-action-btn" onclick="addSet(${si})">+ add set</button><button class="set-action-btn gold" onclick="duplicateLastSet(${si})">⊕ duplicate last</button>${hasPrev?`<button class="set-action-btn gold" onclick="quickFill(${si})">↑ last session</button>`:''}</div></div>`;
+    const ex=s.exercise;
+    const hasPrev=!!Object.values(D.sessions).find(sess=>sess.progIdx===logState.sched.sessionIdx);
+    const rowsHtml=s.rows.map((r,ri)=>{
+      const target=pctCalc(ex.rm,ex.sets[ri]?.pct);
+      const noteStr=r.note?` <span style="font-size:9px;color:var(--gold)">${r.note}</span>`:'';
+      return `<div class="set-row-g"><div class="set-num" style="font-size:10px">${ri+1}${noteStr}</div><input class="set-inp target" type="number" inputmode="decimal" step="0.5" placeholder="${target?fmt(target):'kg'}" value="${r.kg}" oninput="setVal(${si},${ri},'kg',this.value)" /><input class="set-inp" type="number" inputmode="numeric" step="1" placeholder="${r.reps||ex.sets[ri]?.reps||''}" value="${r.reps}" oninput="setVal(${si},${ri},'reps',this.value)" /><select class="rpe-sel" onchange="setVal(${si},${ri},'rpe',this.value)"><option value="">—</option>${[6,6.5,7,7.5,8,8.5,9,9.5,10].map(v=>`<option value="${v}" ${r.rpe==v?'selected':''}>${v}</option>`).join('')}</select><button class="fail-btn ${r.failed?'failed':''}" onclick="toggleFail(${si},${ri})">${r.failed?'MISS':'—'}</button><button class="rm-set-btn" onclick="removeSet(${si},${ri})">×</button></div>`;
+    }).join('');
+    // Prescription summary: group consecutive same-pct+reps sets
+    const rxGroups=[];ex.sets.forEach(set=>{
+      const last=rxGroups[rxGroups.length-1];
+      if(last&&last.pct===set.pct&&last.reps===set.reps)last.count++;
+      else rxGroups.push({pct:set.pct,reps:set.reps,count:1});
+    });
+    const rxStr=rxGroups.map(g=>{
+      const t=pctCalc(ex.rm,g.pct);
+      return `${g.count}x${g.reps}${t?' @ '+fmt(t)+'kg':g.pct?' @ '+g.pct+'%':''}`;
+    }).join(' + ');
+    return `<div class="lift-block"><div class="lift-hdr"><div class="lift-title">${ex.name.toUpperCase()}</div><div class="lift-rx" style="font-size:9px;max-width:60%;text-align:right;line-height:1.4">${rxStr}</div></div><div class="set-hdr-row"><span></span><span>KG</span><span>REPS</span><span>RPE</span><span>MISS</span><span></span></div>${rowsHtml}<div class="set-actions"><button class="set-action-btn" onclick="addSet(${si})">+ add set</button><button class="set-action-btn gold" onclick="duplicateLastSet(${si})">⊕ dup last</button>${hasPrev?`<button class="set-action-btn gold" onclick="quickFill(${si})">&#8593; last session</button>`:''}</div></div>`;
   }).join('');
   const mediaThumbs=logState.media.map(m=>`<img class="media-thumb" src="${m.data}" onclick="openLightbox('${m.data}')" alt="media" />`).join('');
-  c.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><button class="btn-back" onclick="logState=null;render()">← back</button><div><div style="font-size:15px;font-weight:500;color:var(--text)">${sn(logState.sched.week,t.letter)}</div><div style="font-size:10px;color:var(--text3)">${dayName} ${dateLabel}${deload?' · DELOAD':''}</div></div></div><div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px"><span style="font-size:9px;letter-spacing:.12em;color:var(--text3)">SESSION VOLUME</span><span style="font-size:16px;font-weight:500;color:var(--gold)" id="volDisplay">${Math.round(totalVol).toLocaleString()}kg</span></div><div class="vol-bar"><div class="vol-fill" id="volFill" style="width:${Math.min(totalVol/2000*100,100).toFixed(0)}%"></div></div></div>${liftsHtml}<textarea class="notes-ta" placeholder="Session notes, technique cues…" oninput="logState.notes=this.value">${logState.notes}</textarea><div class="media-section"><div class="media-label">SESSION MEDIA</div><div class="media-row">${mediaThumbs}</div><div class="media-add-btns" style="margin-top:8px"><button class="media-add-btn" onclick="triggerMedia('camera')">📷 Camera</button><button class="media-add-btn" onclick="triggerMedia('library')">🖼 Library</button></div><input type="file" id="mediaInput" accept="image/*,video/*" style="display:none" onchange="handleMediaUpload(event)" /></div><button class="btn-gold" style="margin-top:12px" onclick="saveSession()">SAVE SESSION</button>`;
+  c.innerHTML=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><button class="btn-back" onclick="logState=null;render()">&#8592; back</button><div><div style="font-size:15px;font-weight:500;color:var(--text)">${sessLabel(prog)}</div><div style="font-size:10px;color:var(--text3)">${dayName} ${dateLabel}${deload?' · DELOAD':''}</div></div></div><div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px"><span style="font-size:9px;letter-spacing:.12em;color:var(--text3)">SESSION VOLUME</span><span style="font-size:16px;font-weight:500;color:var(--gold)" id="volDisplay">${Math.round(totalVol).toLocaleString()}kg</span></div><div class="vol-bar"><div class="vol-fill" id="volFill" style="width:${Math.min(totalVol/2000*100,100).toFixed(0)}%"></div></div></div>${liftsHtml}<textarea class="notes-ta" placeholder="Session notes, technique cues…" oninput="logState.notes=this.value">${logState.notes}</textarea><div class="media-section"><div class="media-label">SESSION MEDIA</div><div class="media-row">${mediaThumbs}</div><div class="media-add-btns" style="margin-top:8px"><button class="media-add-btn" onclick="triggerMedia('camera')">&#128247; Camera</button><button class="media-add-btn" onclick="triggerMedia('library')">&#128444; Library</button></div><input type="file" id="mediaInput" accept="image/*,video/*" style="display:none" onchange="handleMediaUpload(event)" /></div><button class="btn-gold" style="margin-top:12px" onclick="saveSession()">SAVE SESSION</button>`;
 }
 
 function setVal(si,ri,field,val){
@@ -486,11 +640,14 @@ function setVal(si,ri,field,val){
   if(el)el.textContent=Math.round(v).toLocaleString()+'kg';if(fill)fill.style.width=Math.min(v/2000*100,100).toFixed(0)+'%';
 }
 function toggleFail(si,ri){logState.sets[si].rows[ri].failed=!logState.sets[si].rows[ri].failed;render();}
-function addSet(si){logState.sets[si].rows.push({reps:'',kg:'',rpe:'',failed:false});render();}
+function addSet(si){
+  const ex=logState.sets[si].exercise;const lastSet=ex.sets[ex.sets.length-1];
+  logState.sets[si].rows.push({reps:lastSet?.reps||'',kg:'',rpe:'',failed:false,pct:lastSet?.pct||null});render();
+}
 function removeSet(si,ri){if(logState.sets[si].rows.length<=1){showToast('Need at least 1 set');return;}logState.sets[si].rows.splice(ri,1);render();}
 function duplicateLastSet(si){const rows=logState.sets[si].rows;if(!rows.length)return;rows.push({...rows[rows.length-1]});render();showToast('Set duplicated');}
 function quickFill(si){
-  const prev=Object.values(D.sessions).filter(s=>s.templateIdx===logState.sched.sessionIdx);if(!prev.length)return;
+  const prev=Object.values(D.sessions).filter(s=>s.progIdx===logState.sched.sessionIdx);if(!prev.length)return;
   const last=prev[prev.length-1];const prevRows=last?.sets?.[si]?.rows;if(!prevRows)return;
   prevRows.forEach((pr,ri)=>{if(logState.sets[si].rows[ri])logState.sets[si].rows[ri].kg=pr.kg;});
   render();showToast('Last weights loaded');
@@ -504,16 +661,25 @@ function handleMediaUpload(e){
 }
 function openLightbox(src){document.getElementById('lightboxImg').src=src;document.getElementById('lightbox').classList.add('show');}
 function closeLightbox(){document.getElementById('lightbox').classList.remove('show');}
+
 function saveSession(){
   let vol=0;logState.sets.forEach(s=>s.rows.forEach(r=>{vol+=(parseFloat(r.kg)||0)*(parseFloat(r.reps)||0);}));
-  const t=SESSION_TEMPLATES[logState.sched.sessionIdx];
-  const sess={id:logState.id,templateIdx:logState.sched.sessionIdx,week:logState.sched.week,name:sn(logState.sched.week,t.letter),date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'}),sets:logState.sets.map(s=>({exercise:s.exercise.name,rows:s.rows})),notes:logState.notes,volume:Math.round(vol),media:logState.media};
+  const prog=logState.prog;
+  const sess={
+    id:logState.id,progIdx:logState.sched.sessionIdx,progWeek:prog.week,
+    name:sessLabel(prog),date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'}),
+    sets:logState.sets.map(s=>({exercise:s.exercise.name,rows:s.rows})),
+    notes:logState.notes,volume:Math.round(vol),media:logState.media,
+  };
   D.sessions[logState.id]=sess;
   logState.sets.forEach(s=>{
     const maxKg=Math.max(...s.rows.map(r=>parseFloat(r.kg)||0));
     if(maxKg>0){
-      const k=Object.keys(D.prs).find(k=>k.toLowerCase()===s.exercise.name.toLowerCase())||s.exercise.name;
-      if(!D.prs[k])D.prs[k]={};if(!D.prs[k].kg||maxKg>D.prs[k].kg){D.prs[k]={kg:maxKg,date:sess.date};setTimeout(()=>showToast(`New PR — ${k}: ${fmt(maxKg)}kg`),300);}
+      const rmKey=s.exercise.rm;if(!rmKey)return;
+      const k=Object.keys(D.prs).find(k=>k.toLowerCase()===rmKey.toLowerCase());
+      if(!k)return;
+      if(!D.prs[k])D.prs[k]={};
+      if(!D.prs[k].kg||maxKg>D.prs[k].kg){D.prs[k]={kg:maxKg,date:sess.date};setTimeout(()=>showToast('New PR — '+rmKey+': '+fmt(maxKg)+'kg'),300);}
     }
   });
   save();logState=null;
@@ -524,11 +690,14 @@ function saveSession(){
 function renderLifts(c){
   const LIFTS=Object.keys(D.prs);
   const rmCards=LIFTS.map(k=>{
-    const pr=D.prs[k];const editing=D.editingRM===k;
-    return `<div class="rm-card"><div class="rm-lift">${k.toUpperCase()}</div>${editing?`<div style="display:flex;align-items:center;gap:6px;margin-top:4px"><input class="rm-input" type="number" inputmode="decimal" step="0.5" value="${pr?.kg||''}" id="rmi_${k.replace(/[\s&]/g,'_')}" /><button class="btn-outline" style="padding:6px 10px;font-size:11px" onclick="saveRM('${k}')">Save</button></div>`:`<div style="display:flex;align-items:center;justify-content:space-between"><div class="rm-val">${pr?.kg?fmt(pr.kg):'—'}<span>kg</span></div><button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px" onclick="editRM('${k}')">✎</button></div><div style="font-size:10px;color:var(--text3);margin-top:2px">${pr?.date||'not set'}</div>`}</div>`;
+    const pr=D.prs[k];const editing=D.editingRM===k;const safeId=k.replace(/[\s&]/g,'_');
+    return `<div class="rm-card"><div class="rm-lift">${k.toUpperCase()}</div>${editing
+      ?`<div style="display:flex;align-items:center;gap:6px;margin-top:4px"><input class="rm-input" type="number" inputmode="decimal" step="0.5" value="${pr?.kg||''}" id="rmi_${safeId}" /><button class="btn-outline" style="padding:6px 10px;font-size:11px" onclick="saveRM('${k}')">Save</button></div>`
+      :`<div style="display:flex;align-items:center;justify-content:space-between"><div class="rm-val">${pr?.kg?fmt(pr.kg):'—'}<span>kg</span></div><button style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:4px" onclick="editRM('${k}')">&#9998;</button></div><div style="font-size:10px;color:var(--text3);margin-top:2px">${pr?.date||'not set'}</div>`
+    }</div>`;
   }).join('');
-  const pcts=[60,65,70,75,78,80,82,85,88,90,95,100];
-  const calcLift=LIFTS.find(k=>D.prs[k]?.kg)||'Snatch';const calcPR=D.prs[calcLift]?.kg;
+  const pcts=[50,60,65,70,73,75,78,80,83,85,88,90,95,100];
+  const calcLift=LIFTS.find(k=>D.prs[k]?.kg)||'Back Squat';const calcPR=D.prs[calcLift]?.kg;
   const tableRows=calcPR?pcts.map(p=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border);font-size:13px"><span style="color:var(--text3)">${p}%</span><span style="color:var(--gold)">${fmt(round5(calcPR*(p/100)))}kg</span></div>`).join(''):'';
   c.innerHTML=`<p class="sec-label">1 REP MAXES</p><div class="rm-grid">${rmCards}</div><p class="sec-label">% REVERSE CALCULATOR</p><div class="card" style="margin-bottom:12px"><div class="calc-row"><input class="calc-inp" type="number" inputmode="decimal" step="0.5" placeholder="Weight (kg)" id="revKg" oninput="updateRevCalc()" /><input class="calc-inp" type="number" inputmode="decimal" step="0.5" placeholder="1RM (kg)" id="rev1rm" oninput="updateRevCalc()" /><div class="calc-result" id="revResult">—%</div></div><div style="font-size:10px;color:var(--text3)">Leave 1RM blank to use ${calcLift} (${calcPR?fmt(calcPR)+'kg':'not set'})</div></div>${calcPR?`<p class="sec-label">${calcLift.toUpperCase()} TABLE (${fmt(calcPR)}kg)</p><div class="card">${tableRows}</div>`:''}`;
 }
@@ -540,36 +709,40 @@ function saveRM(k){
 }
 function updateRevCalc(){
   const kg=parseFloat(document.getElementById('revKg')?.value)||0;
-  const calcLift=Object.keys(D.prs).find(k=>D.prs[k]?.kg)||'Snatch';
+  const calcLift=Object.keys(D.prs).find(k=>D.prs[k]?.kg)||'Back Squat';
   const rm=parseFloat(document.getElementById('rev1rm')?.value)||D.prs[calcLift]?.kg||0;
   const el=document.getElementById('revResult');if(el)el.textContent=(kg>0&&rm>0)?Math.round(kg/rm*100)+'%':'—%';
 }
 
 function renderProgress(c){
   if(progressChart){progressChart.destroy();progressChart=null;}if(weighChart){weighChart.destroy();weighChart=null;}
-  const allLifts=['Snatch','Clean & Jerk','Back Squat','Front Squat','Power Snatch','Power Clean'];
+  const allLifts=['Snatch','C&J','Back Squat','Front Squat','Power Snatch','Power Clean'];
   const pills=allLifts.map(l=>`<button class="pill ${l===progressLift?'active':''}" onclick="progressLift='${l}';renderProgress(document.getElementById('content'))">${l}</button>`).join('');
   const points=[];
-  if(progressLift==='Snatch')points.push({label:'Start',kg:45});
-  if(progressLift==='Clean & Jerk')points.push({label:'Start',kg:60});
-  if(progressLift==='Back Squat')points.push({label:'Start',kg:95});
-  Object.values(D.sessions).forEach(s=>{s.sets.forEach(sg=>{if(sg.exercise?.toLowerCase()===progressLift.toLowerCase()){const max=Math.max(...sg.rows.map(r=>parseFloat(r.kg)||0));if(max>0)points.push({label:s.name,kg:max});}});});
-  const bwPts=D.bodyweight.map(b=>({label:`W${b.week}`,kg:b.kg}));
-  const w=currentWeek();const bwLast=D.bodyweight.length?D.bodyweight[D.bodyweight.length-1]:null;
+  Object.values(D.sessions).forEach(s=>{
+    s.sets.forEach(sg=>{
+      if(sg.exercise?.toLowerCase()===progressLift.toLowerCase()){
+        const max=Math.max(...sg.rows.map(r=>parseFloat(r.kg)||0));
+        if(max>0)points.push({label:s.name,kg:max});
+      }
+    });
+  });
+  const bwPts=D.bodyweight.map(b=>({label:'CW'+b.week,kg:b.kg}));
+  const calWk=currentCalWeek();const bwLast=D.bodyweight.length?D.bodyweight[D.bodyweight.length-1]:null;
   const histRows=Object.values(D.sessions).reverse().map(s=>{
     const mediaThumbs=s.media&&s.media.length?`<div class="hist-media">${s.media.map(m=>`<img class="hist-thumb" src="${m.data}" onclick="openLightbox('${m.data}')" alt="media" />`).join('')}</div>`:'';
     return `<div class="history-row"><div style="display:flex;justify-content:space-between;width:100%;align-items:center"><div><div style="font-size:10px;color:var(--text3)">${s.date} · ${s.name}</div><div style="font-size:10px;color:var(--text3);margin-top:2px">${s.volume?s.volume.toLocaleString()+'kg volume':''}</div></div><div style="font-size:11px;color:var(--green)">${s.volume?'✓':''}</div></div>${mediaThumbs}</div>`;
   }).join('');
-  c.innerHTML=`<p class="sec-label">LIFT PROGRESSION</p><div class="pill-row">${pills}</div><div class="chart-wrap"><canvas id="progChart"></canvas></div><p class="sec-label">WEEKLY WEIGH-IN</p><div class="card" style="margin-bottom:14px"><div class="weigh-row"><div class="weigh-lbl">Week ${w}</div><input class="weigh-inp" type="number" inputmode="decimal" step="0.1" placeholder="kg" id="bwInput" value="${bwLast&&bwLast.week===w?bwLast.kg:''}" /><button class="weigh-save" onclick="saveWeight()">Save</button></div></div>${bwPts.length?`<div class="chart-wrap"><canvas id="bwChart"></canvas></div>`:''}<p class="sec-label">SESSION HISTORY</p><div class="card">${histRows||'<div class="empty">No sessions logged yet</div>'}</div>`;
+  c.innerHTML=`<p class="sec-label">LIFT PROGRESSION</p><div class="pill-row">${pills}</div><div class="chart-wrap"><canvas id="progChart"></canvas></div><p class="sec-label">WEEKLY WEIGH-IN</p><div class="card" style="margin-bottom:14px"><div class="weigh-row"><div class="weigh-lbl">CW ${calWk}</div><input class="weigh-inp" type="number" inputmode="decimal" step="0.1" placeholder="kg" id="bwInput" value="${bwLast&&bwLast.week===calWk?bwLast.kg:''}" /><button class="weigh-save" onclick="saveWeight()">Save</button></div></div>${bwPts.length?`<div class="chart-wrap"><canvas id="bwChart"></canvas></div>`:''}<p class="sec-label">SESSION HISTORY</p><div class="card">${histRows||'<div class="empty">No sessions logged yet</div>'}</div>`;
   const co={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#666',font:{size:10}},grid:{color:D.darkMode?'#222':'#ddd'}},y:{ticks:{color:'#666',font:{size:10},callback:v=>v+'kg'},grid:{color:D.darkMode?'#222':'#ddd'}}}};
   if(points.length>0)progressChart=new Chart(document.getElementById('progChart'),{type:'line',data:{labels:points.map(p=>p.label),datasets:[{data:points.map(p=>p.kg),borderColor:'#c8a96e',backgroundColor:'rgba(200,169,110,0.08)',borderWidth:2,pointBackgroundColor:'#c8a96e',pointRadius:4,tension:.3,fill:true}]},options:co});
   if(bwPts.length>0)weighChart=new Chart(document.getElementById('bwChart'),{type:'line',data:{labels:bwPts.map(p=>p.label),datasets:[{data:bwPts.map(p=>p.kg),borderColor:'#4caf7d',backgroundColor:'rgba(76,175,125,0.08)',borderWidth:2,pointBackgroundColor:'#4caf7d',pointRadius:4,tension:.3,fill:true}]},options:co});
 }
 function saveWeight(){
   const v=parseFloat(document.getElementById('bwInput')?.value);if(!v||isNaN(v))return;
-  const w=currentWeek();const date=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-  const idx=D.bodyweight.findIndex(b=>b.week===w);
-  if(idx>=0)D.bodyweight[idx]={week:w,kg:v,date};else D.bodyweight.push({week:w,kg:v,date});
+  const cw=currentCalWeek();const date=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  const idx=D.bodyweight.findIndex(b=>b.week===cw);
+  if(idx>=0)D.bodyweight[idx]={week:cw,kg:v,date};else D.bodyweight.push({week:cw,kg:v,date});
   save();showToast('Weight saved');render();
 }
 
@@ -577,9 +750,9 @@ const RING_R=62;const RING_CIRC=2*Math.PI*RING_R;
 function ringOffset(){return RING_CIRC*(1-(timerTotal>0?timerSeconds/timerTotal:0));}
 function renderTimer(c){
   const m=Math.floor(timerSeconds/60),s=timerSeconds%60;
-  const disp=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const disp=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
   const isDone=timerSeconds===0&&!timerRunning;
-  c.innerHTML=`<p class="sec-label">REST TIMER</p><div class="timer-wrap"><div class="timer-ring-wrap"><svg width="144" height="144" viewBox="0 0 144 144"><circle class="timer-ring-track" cx="72" cy="72" r="${RING_R}"/><circle class="timer-ring-fill ${isDone?'done':''}" id="timerRing" cx="72" cy="72" r="${RING_R}" stroke-dasharray="${RING_CIRC.toFixed(2)}" stroke-dashoffset="${ringOffset().toFixed(2)}"/></svg><div class="timer-center"><div class="timer-display ${isDone?'done':''}" id="timerDisp">${disp}</div><div class="timer-sub">${timerRunning?'RESTING':'READY'}</div></div></div><div class="timer-presets">${[60,90,120,180,240,300].map(p=>`<button class="timer-preset-btn ${p===timerPreset?'active':''}" onclick="setPreset(${p})">${p>=60?p/60+'m':p+'s'}</button>`).join('')}</div><div class="timer-custom-row"><span class="timer-custom-lbl">CUSTOM</span><input class="timer-custom-inp" type="number" inputmode="numeric" min="5" max="600" value="${timerPreset}" id="customInp" onchange="setPreset(Math.max(5,Math.min(600,parseInt(this.value)||60)))" /><span class="timer-custom-unit">sec</span></div><div class="timer-btns"><button class="timer-btn" onclick="resetTimer()">↺</button><button class="timer-btn primary" onclick="toggleTimer()" id="timerPlayBtn">${timerRunning?'⏸':'▶'}</button><button class="timer-btn" onclick="addTime(30)">+30</button></div><div class="toggle-row"><span>Auto-start on set save</span><div class="toggle-sw ${timerAutoStart?'on':''}" onclick="timerAutoStart=!timerAutoStart;renderTimer(document.getElementById('content'))"><div class="toggle-knob"></div></div></div></div><div class="card"><div style="font-size:9px;letter-spacing:.12em;color:var(--text3);margin-bottom:8px">OLYMPIC LIFTING REST GUIDE</div><div style="font-size:12px;color:var(--text2);line-height:2.4"><div>Snatch / Clean & Jerk<span style="float:right;color:var(--text3)">3–5 min</span></div><div>Pulls / squats<span style="float:right;color:var(--text3)">2–3 min</span></div><div>Accessory work<span style="float:right;color:var(--text3)">1–2 min</span></div></div></div>`;
+  c.innerHTML=`<p class="sec-label">REST TIMER</p><div class="timer-wrap"><div class="timer-ring-wrap"><svg width="144" height="144" viewBox="0 0 144 144"><circle class="timer-ring-track" cx="72" cy="72" r="${RING_R}"/><circle class="timer-ring-fill ${isDone?'done':''}" id="timerRing" cx="72" cy="72" r="${RING_R}" stroke-dasharray="${RING_CIRC.toFixed(2)}" stroke-dashoffset="${ringOffset().toFixed(2)}"/></svg><div class="timer-center"><div class="timer-display ${isDone?'done':''}" id="timerDisp">${disp}</div><div class="timer-sub">${timerRunning?'RESTING':'READY'}</div></div></div><div class="timer-presets">${[60,90,120,180,240,300].map(p=>`<button class="timer-preset-btn ${p===timerPreset?'active':''}" onclick="setPreset(${p})">${p>=60?p/60+'m':p+'s'}</button>`).join('')}</div><div class="timer-custom-row"><span class="timer-custom-lbl">CUSTOM</span><input class="timer-custom-inp" type="number" inputmode="numeric" min="5" max="600" value="${timerPreset}" id="customInp" onchange="setPreset(Math.max(5,Math.min(600,parseInt(this.value)||60)))" /><span class="timer-custom-unit">sec</span></div><div class="timer-btns"><button class="timer-btn" onclick="resetTimer()">&#8634;</button><button class="timer-btn primary" onclick="toggleTimer()" id="timerPlayBtn">${timerRunning?'⏸':'&#9654;'}</button><button class="timer-btn" onclick="addTime(30)">+30</button></div><div class="toggle-row"><span>Auto-start on set save</span><div class="toggle-sw ${timerAutoStart?'on':''}" onclick="timerAutoStart=!timerAutoStart;renderTimer(document.getElementById('content'))"><div class="toggle-knob"></div></div></div></div><div class="card"><div style="font-size:9px;letter-spacing:.12em;color:var(--text3);margin-bottom:8px">OLYMPIC LIFTING REST GUIDE</div><div style="font-size:12px;color:var(--text2);line-height:2.4"><div>Snatch / C&amp;J<span style="float:right;color:var(--text3)">3–5 min</span></div><div>Pulls / squats<span style="float:right;color:var(--text3)">2–3 min</span></div><div>Accessory work<span style="float:right;color:var(--text3)">1–2 min</span></div></div></div>`;
 }
 function setPreset(s){timerPreset=s;timerTotal=s;if(!timerRunning)timerSeconds=s;renderTimer(document.getElementById('content'));}
 function toggleTimer(){
@@ -594,13 +767,14 @@ function addTime(s){timerSeconds+=s;if(timerTotal<timerSeconds)timerTotal=timerS
 function updateTimerRing(){
   const m=Math.floor(timerSeconds/60),s=timerSeconds%60;const isDone=timerSeconds===0&&!timerRunning;
   const dispEl=document.getElementById('timerDisp');const ringEl=document.getElementById('timerRing');const playEl=document.getElementById('timerPlayBtn');
-  if(dispEl){dispEl.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;dispEl.className='timer-display'+(isDone?' done':'');}
+  if(dispEl){dispEl.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');dispEl.className='timer-display'+(isDone?' done':'');}
   if(ringEl){ringEl.style.strokeDashoffset=ringOffset().toFixed(2);ringEl.className='timer-ring-fill'+(isDone?' done':'');}
-  if(playEl)playEl.textContent=timerRunning?'⏸':'▶';
+  if(playEl)playEl.textContent=timerRunning?'⏸':'&#9654;';
 }
 
 document.getElementById('app').className=D.darkMode?'app':'app lm';
 render();
 </script>
+
 </body>
 </html>
